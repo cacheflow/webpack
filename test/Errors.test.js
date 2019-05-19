@@ -393,4 +393,111 @@ describe("Errors", () => {
 			}
 		);
 	});
+
+	it("should show loader used if it is present when module parsing fails", done => {
+		const folder = path.join(__dirname, "/fixtures");
+		getErrors(
+			{
+				mode: "development",
+				entry: path.resolve(folder, "./abc.html"),
+				module: {
+					rules: [
+						{
+							test: /\.json$/,
+							use: [{ loader: "json-loader" }]
+						}
+					]
+				}
+			},
+			(errors, warnings) => {
+				const messages = errors[0].split("\n");
+				const loaderUsedMessage = messages.filter(message =>
+					message.includes("Tried processing with loaders: json-loader.")
+				)[0];
+				expect(loaderUsedMessage).toMatch(
+					"Tried processing with loaders: json-loader."
+				);
+				done();
+			}
+		);
+	});
+
+	it("should show all loaders used if they are in config when module parsing fails", done => {
+		const folder = path.join(__dirname, "/fixtures");
+		getErrors(
+			{
+				mode: "development",
+				entry: path.resolve(folder, "./abc.html"),
+				module: {
+					rules: [
+						{
+							test: /\.json$/,
+							use: [{ loader: "json-loader" }, { loader: "coffee-loader" }]
+						}
+					]
+				}
+			},
+			(errors, warnings) => {
+				const messages = errors[0].split("\n");
+				const loaderUsedMessage = messages.filter(message =>
+					message.includes(
+						"Tried processing with loaders: json-loader and coffee-loader."
+					)
+				)[0];
+				expect(loaderUsedMessage).toMatch(
+					"Tried processing with loaders: json-loader and coffee-loader."
+				);
+				done();
+			}
+		);
+	});
+
+	it("should show all loaders used if use is a string", done => {
+		const folder = path.join(__dirname, "/fixtures");
+		getErrors(
+			{
+				mode: "development",
+				entry: path.resolve(folder, "./abc.html"),
+				module: {
+					rules: [
+						{ test: /\.json$/, use: "json-loader" },
+						{ test: /\.coffee$/, use: "coffee-loader" }
+					]
+				}
+			},
+			(errors, warnings) => {
+				const messages = errors[0].split("\n");
+				const loaderUsedMessage = messages.filter(message =>
+					message.includes(
+						"Tried processing with loaders: json-loader and coffee-loader."
+					)
+				)[0];
+				expect(loaderUsedMessage).toMatch(
+					"Tried processing with loaders: json-loader and coffee-loader."
+				);
+				done();
+			}
+		);
+	});
+
+	it("should show 'No Loaders present to process this file.' if loaders are not included in config when module parsing fails", done => {
+		const folder = path.join(__dirname, "/fixtures");
+		getErrors(
+			{
+				mode: "development",
+				entry: path.resolve(folder, "./abc.html"),
+				module: {}
+			},
+			(errors, warnings) => {
+				const messages = errors[0].split("\n");
+				const loaderUsedMessage = messages.filter(message =>
+					message.includes("No Loaders present to process this file.")
+				)[0];
+				expect(loaderUsedMessage).toMatch(
+					"No Loaders present to process this file."
+				);
+				done();
+			}
+		);
+	});
 });
